@@ -3,7 +3,7 @@
 ### EnkPi is a series of 4 ePaper displays mounted on PCBs to provide sturdiness and comfort to the users.
 Powered with **Raspberry Pi Pico W**, these EnkPi boards have Partial Refresh Support with up to 170 degrees Wide Viewing Angle. In this github repo will see setup and getting started guide for EnkPi 4.2" series.
 
-<img src= "https://github.com/sbcshop/EnkPi_4.2_Software/blob/main/images/EnkPi_4_2.jpg " width = "500" height = "300" />
+<img src= "https://github.com/sbcshop/EnkPi_4.2_Software/blob/main/images/EnkPi_4_2.jpg " width = "300" height = "250" />
 <img src= "https://github.com/sbcshop/EnkPi_4.2_Software/blob/main/images/pinout_4_2.jpg" width = "700" height = "300"/>
 
 ## Getting Started with EnkPi
