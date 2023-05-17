@@ -40,7 +40,7 @@ class E_paper:
         self.height = EPD_HEIGHT
         
         self.spi = SPI(1)
-        self.spi.init(baudrate=4000_000)
+        self.spi.init(baudrate=4000000)
         self.dc_pin = Pin(DC_PIN, Pin.OUT)
         
         
@@ -66,17 +66,14 @@ class E_paper:
     def spi_writebyte(self, data):
         self.spi.write(bytearray(data))
 
-    def module_exit(self):
-        self.digital_write(self.reset_pin, 0)
-
     # Hardware reset
     def reset(self):
         self.digital_write(self.reset_pin, 1)
-        self.delay_ms(20) 
+        self.delay_ms(200) 
         self.digital_write(self.reset_pin, 0)
-        self.delay_ms(2)
+        self.delay_ms(5)
         self.digital_write(self.reset_pin, 1)
-        self.delay_ms(20)
+        self.delay_ms(200)
 
 
     def send_command(self, command):
@@ -88,20 +85,30 @@ class E_paper:
     def send_data(self, data):
         self.digital_write(self.dc_pin, 1)
         self.digital_write(self.cs_pin, 0)
-        #self.spi_writebyte([data])
-        self.spi.write(bytearray(data))
+        self.spi_writebyte([data])
+        #self.spi.write(bytearray(data))
         self.digital_write(self.cs_pin, 1)
+        
+    def send_data2(self, data):
+        self.digital_write(self.dc_pin, 1)
+        self.digital_write(self.cs_pin, 0)
+        self.spi_writebyte(data)
+        #self.spi.write(bytearray(data))
+        self.digital_write(self.cs_pin, 1)
+        
+    
     
     def ReadBusy(self):
         print("display busy")
+        self.send_command(0x71)
         while(self.digital_read(self.busy_pin) == 0):      #  LOW: idle, HIGH: busy
             self.send_command(0x71)
-        self.delay_ms(10) 
+            self.delay_ms(20) 
         print("display release")
         
     def TurnOnDisplay(self):
         self.send_command(0x12)
-        self.delay_ms(10) 
+        self.delay_ms(20) 
         self.ReadBusy()
 
             
@@ -113,45 +120,29 @@ class E_paper:
 
         self.send_command(0x00)  # panel setting
         self.send_data(0x0f)
+        
+        return 0
 
             
     def clear_screen(self):
-        high = self.height
-        if( self.width % 8 == 0) :
-            wide =  self.width // 8
-        else :
-            wide =  self.width // 8 + 1
+        if self.width % 8 == 0:
+            linewidth = int(self.width / 8)
+        else:
+            linewidth = int(self.width / 8) + 1
 
         self.send_command(0x10)
-        for j in range(0, high):
-            for i in range(0, wide):
-                self.send_data(0xff)
-                
+        self.send_data2([0xff] * int(self.height * linewidth))
+            
         self.send_command(0x13)
-        for j in range(0, high):
-            for i in range(0, wide):
-                self.send_data(0xff)
-        
-        self.send_command(0x12)
-        self.delay_ms(10)
+        self.send_data2([0xff] * int(self.height * linewidth))
         self.TurnOnDisplay()
         
-    def display(self,blackImage,redImage):
-        high = self.height
-        if( self.width % 8 == 0) :
-            wide =  self.width // 8
-        else :
-            wide =  self.width // 8 + 1
-                
+    def display(self,blackImage,redImage):                
         self.send_command(0x10)
-        for j in range(0, high):
-            for i in range(0, wide):
-                self.send_data(blackImage[i + j * wide])
+        self.send_data2(blackImage)
                 
         self.send_command(0x13)
-        for j in range(0, high):
-            for i in range(0, wide):
-                self.send_data(redImage[i + j * wide])
+        self.send_data2(redImage)
                 
         self.TurnOnDisplay()
         
@@ -164,6 +155,18 @@ class E_paper:
         self.ReadBusy()          # waiting for the electronic paper IC to release the idle signal
         self.send_command(0X07)  # deep sleep
         self.send_data(0xA5)
+        
+        self.delay_ms(2000)
+        self.module_exit()
+        
+    def module_exit(self):
+        self.spi.deinit()
+        print("entering sleep mode")
+        self.digital_write(self.reset_pin, 0)
+        self.digital_write(self.busy_pin, 0)
+        self.digital_write(self.dc_pin, 0)
+        self.digital_write(self.cs_pin, 0)
+        
 
 class SDCard:
     def __init__(self):
