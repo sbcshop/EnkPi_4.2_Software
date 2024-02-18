@@ -7,8 +7,8 @@ import time
 mi5=659 #frequency
 
 button1 = Pin(2, Pin.IN, Pin.PULL_UP)
-button2 = Pin(3, Pin.IN, Pin.PULL_UP)
-button3 = Pin(4, Pin.IN, Pin.PULL_UP)
+button2 = Pin(4, Pin.IN, Pin.PULL_UP)
+button3 = Pin(3, Pin.IN, Pin.PULL_UP)
 button4 = Pin(5, Pin.IN, Pin.PULL_UP)
 button5 = Pin(14, Pin.IN, Pin.PULL_UP)
 button6 = Pin(15, Pin.IN, Pin.PULL_UP)
