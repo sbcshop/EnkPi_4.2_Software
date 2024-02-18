@@ -1,6 +1,6 @@
 # library of 7.5 inch e paper
 
-from machine import Pin, SPI,PWM
+from machine import Pin, SPI,PWM, I2C
 from micropython import const
 import framebuf
 import utime,time
@@ -427,4 +427,51 @@ class Buzzer:
         buzz.duty_u16(int(65536*0))
         # Wait for sound interrumption, if needed 
         sleep(silence_duration)
+
+class RTC(object):
+    # 12:00:00 Thrusday 20 October 2022
+    # sec min hour week day month year
+    
+    NowTime = b'\x00\x00\x12\x11\x20\x10\x22'
+    w  = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    
+    address = 0x68
+    start = 0x00
+    alarm = 0x07
+    control = 0x0e
+    status = 0x0f
+    
+    def __init__(self):
+        self.bus = I2C(1)
+
+    def set_time(self,new_time):
+        hour = new_time[0] + new_time[1]
+        minute = new_time[3] + new_time[4]
+        second = new_time[6] + new_time[7]
+        week = "0" + str(self.w.index(new_time.split(",",2)[1])+1)
+        year = new_time.split(",",2)[2][2] + new_time.split(",",2)[2][3]
+        month = new_time.split(",",2)[2][5] + new_time.split(",",2)[2][6]
+        day = new_time.split(",",2)[2][8] + new_time.split(",",2)[2][9]
+        now_time = binascii.unhexlify((second + " " + minute + " " + hour + " " + week + " " + day + " " + month + " " + year).replace(' ',''))
+        self.bus.writeto_mem(int(self.address),int(self.start),now_time)
+    
+    def read_time(self):
+        data = self.bus.readfrom_mem(int(self.address),int(self.start),7)
+        a = data[0]&0x7F  #second
+        b = data[1]&0x7F  #minute
+        c = data[2]&0x3F  #hour
+        d = data[3]&0x07  #week
+        e = data[4]&0x3F  #day
+        f = data[5]&0x1F  #month
+        
+        return "20%x/%02x/%02x %02x:%02x:%02x %s" %(data[6],data[5],data[4],data[2],data[1],data[0],self.w[data[3]-1])
+        
+    def _twos_complement(self, input_value: int, num_bits: int) -> int:  
+        mask = 2 ** (num_bits - 1)  
+        return -(input_value & mask) + (input_value & ~mask)
+ 
+    def temperature(self):  
+        t = self.bus.readfrom_mem(self.address, 0x11, 2)  
+        i = t[0] << 8 | t[1]  
+        return self._twos_complement(i >> 6, 10) * 0.25
 
